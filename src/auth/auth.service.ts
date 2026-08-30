@@ -12,13 +12,21 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
+  // async signup(payload: ISignupParams): Promise<IAuthResponse> {
+  //   const user = await this.userService.create(payload);
+  //   const token = await this.jwtService.signAsync({
+  //     sub: String(user._id),
+  //     email: user.email,
+  //     role: user.role,
+  //   });
   async signup(payload: ISignupParams): Promise<IAuthResponse> {
     const user = await this.userService.create(payload);
+
     const token = await this.jwtService.signAsync({
       sub: String(user._id),
-      email: user.email,
+      username: user.username,
       role: user.role,
     });
     return {
@@ -26,6 +34,7 @@ export class AuthService {
       user: {
         _id: String(user._id),
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role,
         class: user.class,
@@ -38,12 +47,13 @@ export class AuthService {
 
   async login(body: ILoginParams): Promise<IAuthResponse> {
     const user = await this.userService.validateCredentials(
-      body.email,
+      // body.email,
+      body.username,
       body.password,
     );
     const token = await this.jwtService.signAsync({
       sub: String(user._id),
-      email: user.email,
+      username: user.username,
       role: user.role,
     });
     return {
@@ -51,6 +61,7 @@ export class AuthService {
       user: {
         _id: String(user._id),
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role,
         class: user.class,
