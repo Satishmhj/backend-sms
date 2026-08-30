@@ -6,11 +6,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MinLength
 } from 'class-validator';
 import { UserRole } from '../../user/schemas/user.schema';
 
 export class SignupDto {
-  @ApiProperty({ example: 'John Doe', description: 'Full name' })
+  @ApiProperty({ example: 'John Doe', description: 'Full name. Username will be generated automatically' })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -20,9 +21,17 @@ export class SignupDto {
   @IsNotEmpty()
   email: string;
 
+  // @ApiProperty({ example: 'John.Smith', description: 'Username ' })
+  // @IsEmail()
+  // @IsNotEmpty()
+  // username: string;
+
   @ApiProperty({ example: 'password123', description: 'Password' })
   @IsString()
   @IsNotEmpty()
+  @MinLength(8, {
+    message: "Password must be at least 8 characters long."
+  })
   password: string;
 
   @ApiProperty({

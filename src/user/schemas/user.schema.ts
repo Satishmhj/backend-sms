@@ -14,6 +14,9 @@ export class User {
 
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
+  
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  username: string;
 
   @Prop({ required: true, select: false })
   password: string;
@@ -49,6 +52,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 export interface IUserLean {
   _id?: Types.ObjectId;
   name: string;
+  username: string;
   email: string;
   role: UserRole;
   class?: string;

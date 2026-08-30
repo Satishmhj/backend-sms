@@ -13,13 +13,14 @@ import { User, UserDocument, IUserLean, UserRole } from './schemas/user.schema';
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+  ) { }
 
   private formatUser(user: UserDocument): IUserLean {
     return {
       _id: user._id,
       name: user.name,
       email: user.email,
+      username: user.username,
       role: user.role,
       class: user.class,
       rollNumber: user.rollNumber,
@@ -33,6 +34,7 @@ export class UserService {
   async create(payload: {
     name: string;
     email: string;
+    // username: string;
     password: string;
     role: UserRole;
     class?: string;
@@ -44,10 +46,11 @@ export class UserService {
     if (existing) {
       throw new ConflictException('Email already registered');
     }
-
+    const username = await this.generateUniqueUsername(payload.name);
     const hash = await bcrypt.hash(payload.password, 10);
     const user = await this.userModel.create({
       ...payload,
+      username,
       password: hash,
     });
     return this.formatUser(user);
@@ -101,15 +104,46 @@ export class UserService {
     return { deleted: true };
   }
 
-  async validateCredentials(email: string, password: string) {
-    const user = await this.findByEmail(email);
+  async validateCredentials(username: string, password: string) {
+    // const user = await this.findByEmail(username);
+    const user = await this.userModel
+      .findOne({
+        username: username.toLowerCase(),
+      })
+      .select('+password');
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
     return this.formatUser(user);
   }
+  private async generateUniqueUsername(name: string): Promise<string> {
+    const parts = name
+      .trim()
+      .toLowerCase()
+      .split(/\s+/);
+
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
+
+    let baseUsername = lastName
+      ? `${firstName}.${lastName}`
+      : firstName;
+
+    baseUsername = baseUsername.replace(/[^a-z0-9.]/g, '');
+
+    let username = baseUsername;
+    let counter = 2;
+
+    while (await this.userModel.exists({ username })) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+
+    return username;
+  }
+
 }
